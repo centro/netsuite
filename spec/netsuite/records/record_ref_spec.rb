@@ -44,6 +44,51 @@ describe NetSuite::Records::RecordRef do
         expect(record_ref.banana).to eql('for monkeys')
       end
     end
+
+    context 'responding to' do
+      it 'responds to the arbitrary attributes' do
+        expect(record_ref).to respond_to(:name)
+        expect(record_ref).to respond_to(:banana)
+      end
+      it 'continues to respond to other methods' do
+        expect(record_ref).to respond_to(:internal_id)
+        expect(record_ref).to respond_to(:to_s)
+      end
+    end
+  end
+
+  describe 'equality' do
+    context 'when internal id is nil' do
+      subject { NetSuite::Records::RecordRef.new(:name => 'name!') }
+      it { should_not eq(record_ref) }
+      it { should_not eq(NetSuite::Records::RecordRef.new(:name => 'name!')) }
+      it { should_not eq(NetSuite::Records::RecordRef.new(:name => 'other!')) }
+    end
+    context 'when internal id is not nil' do
+      subject { NetSuite::Records::RecordRef.new(:internal_id => '5', :name => 'name!') }
+      it { should_not eq(NetSuite::Records::RecordRef.new(:internal_id => '9', :name => 'name!')) }
+      it { should eq(NetSuite::Records::RecordRef.new(:internal_id => '5')) }
+      it { should eq(NetSuite::Records::RecordRef.new(:internal_id => 5)) }
+      it { should_not eq(NetSuite::Records::RecordRef.new(:name => 'name!')) }
+      it { should eq(NetSuite::Records::RecordRef.new(:internal_id => '5', :name => 'name!')) }
+      it { should eq(NetSuite::Records::RecordRef.new(:internal_id => '5', :name => 'other')) }
+      it { should_not eq(Struct.new(:internal_id).new('5')) }
+    end
+  end
+
+  describe '#hash' do
+    context 'when the internal id is a string' do
+      subject { NetSuite::Records::RecordRef.new(:internal_id => '5') }
+      it 'hashes the internal id' do
+        expect(subject.hash).to eq('5'.hash)
+      end
+    end
+    context 'when the internal id is an integer' do
+      subject { NetSuite::Records::RecordRef.new(:internal_id => 5) }
+      it 'hashes the internal id as a string' do
+        expect(subject.hash).to eq('5'.hash)
+      end
+    end
   end
 
   describe 'untouchables' do
@@ -60,7 +105,7 @@ describe NetSuite::Records::RecordRef do
 
   describe 'initialize from record' do
     it 'initializes a new ref with the proper attributes from the record' do
-      record = NetSuite::Records::Classification.new(:is_inactive => false, :name => 'Retail', :internal_id => '9')
+      record     = NetSuite::Records::Classification.new(:is_inactive => false, :name => 'Retail', :internal_id => '9')
       record_ref = NetSuite::Records::RecordRef.new(record)
       expect(record_ref).to be_kind_of(NetSuite::Records::RecordRef)
       expect(record_ref.internal_id).to eql('9')
@@ -71,7 +116,7 @@ describe NetSuite::Records::RecordRef do
   describe '#to_record' do
     it 'can represent itself as a SOAP record' do
       record_ref = NetSuite::Records::RecordRef.new(:something => 'blah')
-      record = {
+      record     = {
         'platformCore:something' => 'blah'
       }
       expect(record_ref.to_record).to eql(record)
@@ -83,5 +128,4 @@ describe NetSuite::Records::RecordRef do
       expect(record_ref.record_type).to eql('platformCore:RecordRef')
     end
   end
-
 end
