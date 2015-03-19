@@ -4,6 +4,16 @@
 module NetSuite
   module Records
     class Transaction < SalesOrder
+      def initialize(attributes = {})
+        @internal_id = attributes.delete(:internal_id) || attributes.delete(:@internal_id)
+        @external_id = attributes.delete(:external_id) || attributes.delete(:@external_id)
+        @type        = attributes.delete(:type) || attributes.delete(:'@xsi:type')
+        initialize_from_attributes_hash(attributes)
+      end
+
+      def type
+        @type
+      end
 
       def to_record
         rec = super
